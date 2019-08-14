@@ -1,0 +1,17 @@
+version: '3'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./client:/usr/app/
+      - node_modules:/usr/app/node_modules
+    ports:
+      - '3274:3274'
+    environment:
+      PORT: 3274
+      HOST: 0.0.0.0
+volumes:
+  node_modules:
+    driver: local
