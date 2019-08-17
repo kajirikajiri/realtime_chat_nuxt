@@ -8,9 +8,9 @@ services:
       - ./client:/usr/app/
       - node_modules:/usr/app/node_modules
     ports:
-      - '3274:3274'
+      - '3247:3247'
     environment:
-      PORT: 3274
+      PORT: 3247
       HOST: 0.0.0.0
 volumes:
   node_modules:
