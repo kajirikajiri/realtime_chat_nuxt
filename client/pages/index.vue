@@ -56,7 +56,6 @@
           <v-btn color="primary" nuxt to="/inspire">
             Continue
           </v-btn>
-          <v-btn @click="addAlice"></v-btn>
           <v-btn @click="signinUserEmail()">userData</v-btn>
           {{ isSignin }}
         </v-card-actions>
@@ -75,27 +74,6 @@ export default {
     Logo,
     VuetifyLogo
   },
-  asyncData: async ({
-    isDev,
-    route,
-    store,
-    env,
-    params,
-    query,
-    req,
-    res,
-    redirect,
-    error
-  }) => {
-    let isSignin
-    await firebase.auth().onAuthStateChanged(function(user) {
-      console.log(!!user)
-      isSignin = !!user
-    })
-    return {
-      isSignin
-    }
-  },
   data: () => {
     return {
       users: [],
@@ -105,26 +83,23 @@ export default {
       db
     }
   },
+  asyncData: async () => {
+    let isSignin
+    await firebase.auth().onAuthStateChanged(function(user) {
+      console.log(!!user)
+      isSignin = !!user
+    })
+    return {
+      isSignin
+    }
+  },
   firestore: {
     users: db.collection('users'),
     user: db.collection('users').doc('user')
   },
   mounted() {},
   methods: {
-    addAlice: () => {
-      console.log(db)
-      db.collection('users')
-        .doc('user')
-        .set({
-          name: 'alice',
-          sex: 'female'
-        })
-        .then(() => {
-          console.log('user updated!')
-        })
-    },
     signup: (email, password) => {
-      console.log('mail,pass', email, password)
       firebase
         .auth()
         .createUserWithEmailAndPassword(email, password)
@@ -136,7 +111,6 @@ export default {
         })
     },
     signin: (email, password) => {
-      console.log('mail,pass', email, password)
       firebase
         .auth()
         .signInWithEmailAndPassword(email, password)
@@ -150,7 +124,6 @@ export default {
     signinUserEmail: () => {
       firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
-          console.log(user.email)
           return user.email
         }
         return ''
