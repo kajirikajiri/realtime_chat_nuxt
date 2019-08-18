@@ -1,6 +1,6 @@
 <template>
   <div>
-    {{ computedCurrentUserName }}
+    name: {{ computedCurrentUserName }}
     <v-select
       v-model="room_id"
       :items="room_list"
@@ -9,23 +9,25 @@
       label="room"
     ></v-select>
     <v-text-field v-model="new_message" placeholder="newMessage"></v-text-field>
-    <v-btn @click="createMeessages(room_id, user_id, new_message)"></v-btn>
+    <v-btn
+      @click="createMeessages(room_id, firebase_user_id(), new_message)"
+    ></v-btn>
     <v-text-field
       v-model="room_name"
       placeholder="new_room_name"
     ></v-text-field>
     <v-btn @click="createNewRoom(room_name)"></v-btn>
-    <v-card class="mx-auto" max-width="2000" tile>
+    <v-card class="mx-auto" max-width="500" tile>
       <v-list disabled>
-        <v-subheader>REPORTS{{ computedCurrentUserName }}</v-subheader>
-        <v-list-item-group v-model="computedRoomMessage" color="primary">
-          <v-list-item v-for="(list, i) in computedRoomMessage" :key="i">
-            <v-list-item-title
-              v-text="computedUserNameList[i][0].user_name"
-            ></v-list-item-title>
+        <v-subheader>
+          REPORTS
+        </v-subheader>
+        <v-list-item-group v-model="computedUserNameList" color="primary">
+          <v-list-item v-for="(list, i) in computedUserNameList" :key="i">
+            <v-list-item-title v-text="list.user_name"></v-list-item-title>
             <v-list-item-title v-text="list.message"></v-list-item-title>
             <v-list-item-subtitle
-              v-text="list.created ? list.created.toDate() : list.created"
+              v-text="list.created.toDate()"
             ></v-list-item-subtitle>
           </v-list-item>
         </v-list-item-group>
@@ -34,11 +36,12 @@
   </div>
 </template>
 <script>
+import { mapActions, mapState } from 'vuex'
 import firebase from 'firebase'
 import { db } from './db'
 import randomNo from './randomNo'
 export default {
-  data: () => {
+  data() {
     return {
       room_list: [],
       message_list: [],
@@ -58,20 +61,27 @@ export default {
       return this.message_list.filter((doc) => doc.room_id === this.room_id)
     },
     computedUserNameList: function() {
-      const result = []
-      this.computedRoomMessage.forEach((each) => {
-        result.push(
-          this.user_list.filter((doc) => each.user_id === doc.user_id)
+      const result = this.computedRoomMessage.map((each) => {
+        const o = Object.assign({}, each)
+        const processing = this.user_list.filter(
+          (doc) => each.user_id === doc.user_id
         )
+        o.user_name = processing[0].user_name
+        return o
       })
       return result
     },
     computedCurrentUserName: function() {
-      const result = this.user_list.filter(
-        (doc) => doc.user_id === this.user_uid
+      const processing = this.user_list.filter(
+        (doc) => doc.user_id === this.firebase_user_id()
       )
-      console.log(result)
-      return result.user_name
+      let result
+      try {
+        result = processing[0].user_name
+      } catch (e) {
+        console.log('error', e)
+      }
+      return result
     }
   },
   async asyncData() {
@@ -88,9 +98,19 @@ export default {
   firestore: {
     room_list: db.collection('room_list'),
     user_list: db.collection('user_list'),
-    message_list: db.collection('message_list')
+    message_list: db.collection('message_list'),
+    rooms: db.collection('rooms')
+  },
+  async beforeMount() {
+    await this.get_user_id()
   },
   methods: {
+    ...mapActions({
+      get_user_id: 'firebase_user_id/get_user_id'
+    }),
+    ...mapState({
+      firebase_user_id: (state) => state.firebase_user_id.firebase_uid
+    }),
     createMeessages: (room_id, user_id, message) => {
       const message_id = randomNo()
       db.collection('rooms')

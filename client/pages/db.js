@@ -1,7 +1,6 @@
 import firebase from 'firebase'
 import firebaseConfig from './firebaseConfig'
 // Get a Firestore instance
-console.log(firebaseConfig)
 export const db = firebase.initializeApp(firebaseConfig).firestore()
 
 // Export types that exists in Firestore
